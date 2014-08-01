@@ -1,0 +1,79 @@
+## Just for testing....
+- hosts: 127.0.0.1
+  connection: local
+  gather_facts: n
+
+  vars:
+    modules_to_enable: [ "ssl", "proxy" ]
+    module_extensions: [ ".conf", ".load" ]
+
+    # Source directory with all available files
+    sourcedir: ~/ansible_experiments/link_or_override/source
+    # Target directory to build up
+    destdir: ~/ansible_experiments/link_or_override/dest
+
+    # Directory on mgmt host with overides/templates
+    overrides: ~/ansible_experiments/copy_or_override/override
+
+  tasks:
+
+###
+# scan target and source directories
+###
+
+  - command: ls -1 {{ destdir }}
+    register: existing
+    changed_when: False
+
+  - command: ls -1 {{ sourcedir }}
+    register: avail
+    changed_when: False
+ 
+  - local_action: command ls -1 {{ overrides }}
+    register: override
+    changed_when: False
+
+###
+# Create list of all filenames that possibly need to get copied/linked
+###
+
+  - command: echo "{{ item | join() }}"
+    with_nested:
+      - modules_to_enable
+      - module_extensions
+    register: files_wanted
+    changed_when: False
+
+  # Dont use set_fact: x=y for complex datatypes, use the following syntax
+  - set_fact: 
+      files_wanted: "{{ ( files_wanted.results | join(' ', attribute='stdout') ).split(' ') }}"
+
+###
+# Register lists for each action to be done
+###
+
+  # Dont use sets (convert to lists), sets will not be interpreted as complex datatype and results into a string object
+  - set_fact: 
+      to_copy: "{{ files_wanted | intersect(override.stdout_lines) | list }}"
+
+  - set_fact: 
+      to_link: "{{ ( files_wanted | intersect(avail.stdout_lines) ) | difference(to_copy) | list }}"
+
+  - set_fact: 
+      to_delete: "{{ existing.stdout_lines | difference (to_copy | union(to_link)) | list }}"
+
+
+###
+# Ensure file states
+###
+
+  - template: src={{ overrides }}/{{ item }} dest={{ destdir }}
+    with_items: to_copy
+
+  - file: 
+      src={{ sourcedir }}/{{ item }} dest={{ destdir }}/{{ item }}
+      state=link force=yes
+    with_items: to_link
+
+  - file: path={{ destdir }}/{{ item }} state=absent
+    with_items: to_delete
