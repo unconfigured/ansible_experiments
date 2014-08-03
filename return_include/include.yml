@@ -1,0 +1,11 @@
+- debug: msg="Entering include"
+
+- name: "To skip rest of script, falsify include condition from main"
+  set_fact: do_include=false
+
+- debug: "This"
+
+- debug: "is"
+
+- debug: "skipped"
+  

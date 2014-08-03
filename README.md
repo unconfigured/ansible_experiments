@@ -16,3 +16,7 @@ This makes use of filters for unions/differences of lists, set_fact for variable
 **formattting**: 
 This simply shows the syntax for formatting i.e. numbers within a playbook
 
+
+**return_include**: 
+A way to skip rest of include and (successfully) returning to main script
+

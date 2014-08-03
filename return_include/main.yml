@@ -1,0 +1,14 @@
+## Just for testing....
+- hosts: 127.0.0.1
+  connection: local
+  gather_facts: n
+
+  vars:
+    do_include: true
+
+  tasks:
+
+  - include: include.yml
+    when: do_include
+
+  - debug: msg="Continue main"
