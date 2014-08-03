@@ -1,0 +1,18 @@
+## Just for testing....
+- hosts: 127.0.0.1
+  connection: local
+  gather_facts: n
+
+  vars:
+
+    ####
+    # Challenge: Get last octed as 3 digit string
+    ####
+    ip: 1.2.3.4
+    # regex to get last octed
+    last_octed: "{{ ip | regex_replace('.*\\.', '') }}"
+    # Fill with 0, 3 digits length
+    long_last_octed: "{{ '%03d' % ( last_octed | int ) }}"
+
+  tasks:
+  - debug: msg="Fixed length number {{ last_octed }} -> {{ long_last_octed }}"
