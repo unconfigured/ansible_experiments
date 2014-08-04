@@ -1,0 +1,36 @@
+- hosts: remote.host.name
+  gather_facts: no
+
+  vars:
+    ssh_opts: "
+      -o ControlMaster=auto
+      -o ControlPersist=60s
+      -o ControlPath=~/.ansible/cp/ansible-ssh-%h-%p-%r
+      -o KbdInteractiveAuthentication=no
+      -o PreferredAuthentications=publickey
+      -o PasswordAuthentication=no
+      -o ConnectTimeout=10"
+
+  vars_prompt:
+    name: "Make sure a local webserver is running on port 80, than press key"
+
+  tasks:
+ 
+  # Do sth. on remote host to cache credentials (when ssh-password needed) 
+  - raw: echo "Hallo Welt"
+
+  # Start background task on mgmt host which opens a remote port (6080)
+  # on remote host for connect back to local running webserver
+  # This action runs in background FOR 600 SECONDS
+  - local_action: 
+      command ssh {{ ssh_opts }} -fNR 6080:127.0.0.1:80 {{ inventory_hostname }}
+    async: 600
+    poll: 0
+    register: connect_back
+
+  # Connect to forwarded port and fetch index.html
+  - raw: wget -q -O - -t 1 http://127.0.0.1:6080/index.html
+    register: wget
+
+  - debug: var=wget.stdout_lines
+

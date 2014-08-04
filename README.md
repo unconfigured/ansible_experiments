@@ -20,3 +20,6 @@ This simply shows the syntax for formatting i.e. numbers within a playbook
 **return_include**: 
 A way to skip rest of include and (successfully) returning to main script
 
+
+**reverse_connect**: 
+Carry a port from you management host to the client
